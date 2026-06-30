@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ENVIRONMENT', choices: ['dev', 'prod'], description: 'Terraform environment')
+        choice(name: 'ENVIRONMENT', choices: ['dev'], description: 'Terraform environment')
         choice(name: 'ACTION', choices: ['plan', 'apply', 'destroy', 'deploy-app'], description: 'Pipeline action')
         booleanParam(name: 'AUTO_APPROVE', defaultValue: false, description: 'Auto approve apply/destroy')
     }
@@ -13,11 +13,14 @@ pipeline {
         TF_INPUT           = 'false'
         TF_DIR             = "terraform/envs/${params.ENVIRONMENT}"
         BACKEND_FILE       = "../../backend/${params.ENVIRONMENT}.hcl"
+        TFVARS_FILE        = "${params.ENVIRONMENT}.tfvars"
     }
 
     stages {
         stage('Checkout') {
-            steps { checkout scm }
+            steps {
+                checkout scm
+            }
         }
 
         stage('Terraform Version') {
@@ -50,23 +53,35 @@ pipeline {
         }
 
         stage('Terraform Plan') {
-            when { anyOf { expression { params.ACTION == 'plan' }; expression { params.ACTION == 'apply' } } }
+            when {
+                anyOf {
+                    expression { params.ACTION == 'plan' }
+                    expression { params.ACTION == 'apply' }
+                }
+            }
             steps {
                 dir("${env.TF_DIR}") {
-                    sh 'terraform plan -out=tfplan'
+                    sh 'terraform plan -var-file=${TFVARS_FILE} -out=tfplan'
                 }
             }
         }
 
         stage('Approval') {
-            when { anyOf { expression { params.ACTION == 'apply' && !params.AUTO_APPROVE }; expression { params.ACTION == 'destroy' && !params.AUTO_APPROVE } } }
+            when {
+                anyOf {
+                    expression { params.ACTION == 'apply' && !params.AUTO_APPROVE }
+                    expression { params.ACTION == 'destroy' && !params.AUTO_APPROVE }
+                }
+            }
             steps {
                 input message: "Approve ${params.ACTION} for ${params.ENVIRONMENT}?", ok: 'Approve'
             }
         }
 
         stage('Terraform Apply') {
-            when { expression { params.ACTION == 'apply' } }
+            when {
+                expression { params.ACTION == 'apply' }
+            }
             steps {
                 dir("${env.TF_DIR}") {
                     sh 'terraform apply -auto-approve tfplan'
@@ -75,22 +90,30 @@ pipeline {
         }
 
         stage('Terraform Destroy') {
-            when { expression { params.ACTION == 'destroy' } }
+            when {
+                expression { params.ACTION == 'destroy' }
+            }
             steps {
                 dir("${env.TF_DIR}") {
-                    sh 'terraform destroy -auto-approve'
+                    sh 'terraform destroy -var-file=${TFVARS_FILE} -auto-approve'
                 }
             }
         }
 
         stage('Deploy App to EKS') {
-            when { expression { params.ACTION == 'deploy-app' } }
+            when {
+                expression { params.ACTION == 'deploy-app' }
+            }
             steps {
                 dir("${env.TF_DIR}") {
                     script {
-                        env.CLUSTER_NAME = sh(script: 'terraform output -raw cluster_name', returnStdout: true).trim()
+                        env.CLUSTER_NAME = sh(
+                            script: 'terraform output -raw cluster_name',
+                            returnStdout: true
+                        ).trim()
                     }
                 }
+
                 sh 'aws eks update-kubeconfig --region ${AWS_DEFAULT_REGION} --name ${CLUSTER_NAME}'
                 sh 'kubectl apply -f kubernetes/'
                 sh 'kubectl get pods -n hospital'
