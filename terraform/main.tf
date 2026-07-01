@@ -8,7 +8,7 @@ locals {
 }
 
 module "vpc" {
-  source               = "../../modules/vpc"
+  source               = "./modules/vpc"
   name                 = local.name
   vpc_cidr             = var.vpc_cidr
   azs                  = slice(data.aws_availability_zones.available.names, 0, 2)
@@ -19,13 +19,13 @@ module "vpc" {
 }
 
 module "iam" {
-  source = "../../modules/iam"
+  source = "./modules/iam"
   name   = local.name
   tags   = local.tags
 }
 
 module "eks" {
-  source              = "../../modules/eks"
+  source              = "./modules/eks"
   name                = local.name
   cluster_name        = "${local.name}-eks"
   cluster_version     = var.cluster_version
@@ -42,13 +42,13 @@ module "eks" {
 }
 
 module "ecr" {
-  source = "../../modules/ecr"
+  source = "./modules/ecr"
   name   = "${local.name}-app"
   tags   = local.tags
 }
 
 module "alb" {
-  source            = "../../modules/alb"
+  source            = "./modules/alb"
   name              = local.name
   vpc_id            = module.vpc.vpc_id
   public_subnet_ids = module.vpc.public_subnet_ids
@@ -56,7 +56,7 @@ module "alb" {
 }
 
 module "jenkins" {
-  source        = "../../modules/jenkins"
+  source        = "./modules/jenkins"
   enabled       = var.enable_jenkins
   name          = "${local.name}-jenkins"
   vpc_id        = module.vpc.vpc_id

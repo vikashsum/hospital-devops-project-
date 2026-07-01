@@ -2,18 +2,17 @@ pipeline {
     agent any
 
     parameters {
-        choice(name: 'ENVIRONMENT', choices: ['dev'], description: 'Terraform environment')
-        choice(name: 'ACTION', choices: ['plan', 'apply', 'destroy'], description: 'Pipeline action')
-        booleanParam(name: 'AUTO_APPROVE', defaultValue: false, description: 'Auto approve apply/destroy')
+        choice(name: 'ACTION', choices: ['plan', 'apply', 'destroy'], description: 'Terraform action')
+        booleanParam(name: 'AUTO_APPROVE', defaultValue: false, description: 'Skip manual approval for apply/destroy')
     }
 
     environment {
         AWS_DEFAULT_REGION = 'ap-south-1'
         TF_IN_AUTOMATION   = 'true'
         TF_INPUT           = 'false'
-        TF_DIR             = "terraform/envs/${params.ENVIRONMENT}"
-        BACKEND_FILE       = "../../backend/${params.ENVIRONMENT}.hcl"
-        TFVARS_FILE        = "${params.ENVIRONMENT}.tfvars"
+        TF_DIR             = 'terraform'
+        BACKEND_FILE       = 'backend/dev.hcl'
+        TFVARS_FILE        = 'dev.tfvars'
     }
 
     stages {
@@ -23,7 +22,7 @@ pipeline {
             }
         }
 
-        stage('Terraform Version') {
+        stage('Tool Versions') {
             steps {
                 sh 'terraform version'
                 sh 'aws --version'
@@ -31,7 +30,7 @@ pipeline {
             }
         }
 
-        stage('Terraform Fmt') {
+        stage('Terraform Format') {
             steps {
                 sh 'terraform fmt -recursive -check'
             }
@@ -40,7 +39,7 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 dir("${env.TF_DIR}") {
-                    sh 'terraform init -backend-config=${BACKEND_FILE} -reconfigure'
+                    sh 'terraform init -reconfigure -backend-config=${BACKEND_FILE}'
                 }
             }
         }
@@ -67,14 +66,14 @@ pipeline {
             }
         }
 
-        stage('Approval') {
+        stage('Manual Approval') {
             when {
                 expression {
                     (params.ACTION == 'apply' || params.ACTION == 'destroy') && !params.AUTO_APPROVE
                 }
             }
             steps {
-                input message: "Approve ${params.ACTION} for ${params.ENVIRONMENT}?", ok: 'Approve'
+                input message: "Approve ${params.ACTION}?", ok: 'Approve'
             }
         }
 
@@ -133,7 +132,7 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: "${env.TF_DIR}/tfplan", allowEmptyArchive: true
+            archiveArtifacts artifacts: 'terraform/tfplan', allowEmptyArchive: true
         }
     }
 }
