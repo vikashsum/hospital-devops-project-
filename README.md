@@ -1,4 +1,4 @@
-# 🚀 Hospital DevOps Project
+# 🚀 aws-eks-terraform-jenkins project
 
 ## 📌 Project Overview
 
