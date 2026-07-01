@@ -1,82 +1,90 @@
-<<<<<<< HEAD
-# EKS Terraform Jenkins Project
+# 🚀 Hospital DevOps Project
 
-Production-style DevOps project to create an Amazon EKS cluster using Terraform modules, S3 remote backend with DynamoDB locking, and Jenkins pipeline stages for `fmt`, `init`, `validate`, `plan`, `apply`, `destroy`, and Kubernetes deployment.
+## 📌 Project Overview
 
-## Structure
+This project demonstrates how to provision an Amazon EKS cluster using **Terraform Modules** with a **remote backend** (S3 + DynamoDB) and deploy the infrastructure through a **Jenkins CI/CD Pipeline**.
 
-```text
-terraform/
-  backend/
-    dev.hcl
-    prod.hcl
-  envs/
-    dev/main.tf
-    prod/main.tf
-  modules/
-    vpc/
-    iam/
-    eks/
-    ecr/
-    alb/
-    jenkins/
-kubernetes/
-  namespace.yaml
-  deployment.yaml
-  service.yaml
-Jenkinsfile
-```
+The project follows Infrastructure as Code (IaC) principles and can provision the complete AWS infrastructure with a single pipeline execution.
 
-## Backend prerequisites
+---
 
-Create these manually before running Terraform:
-
-- S3 bucket for Terraform state
-- DynamoDB table with partition key `LockID` as String
-
-Update:
+## 🏗 Architecture
 
 ```text
-terraform/backend/dev.hcl
-terraform/backend/prod.hcl
+Developer
+     │
+     ▼
+GitHub Repository
+     │
+     ▼
+Jenkins Pipeline
+     │
+     ▼
+Terraform
+     │
+     ▼
+AWS
+├── VPC
+├── IAM
+├── EKS
+├── ALB
+└── ECR
+     │
+     ▼
+Kubernetes
+     │
+     ▼
+Application
 ```
 
-## Local commands
+---
 
-```bash
-cd terraform/envs/dev
-terraform init -backend-config=../../backend/dev.hcl
-terraform fmt -recursive
-terraform validate
-terraform plan -out=tfplan
-terraform apply tfplan
+## 📂 Project Structure
+
+```text
+hospital-devops-project-
+│
+├── Jenkinsfile
+├── kubernetes
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   └── namespace.yaml
+│
+└── terraform
+    ├── backend
+    │   └── dev.hcl
+    │
+    ├── envs
+    │   └── dev
+    │       ├── main.tf
+    │       ├── variables.tf
+    │       ├── outputs.tf
+    │       ├── providers.tf
+    │       ├── versions.tf
+    │       └── dev.tfvars
+    │
+    └── modules
+        ├── vpc
+        ├── iam
+        ├── eks
+        ├── alb
+        ├── ecr
+        └── jenkins
 ```
 
-Configure kubectl:
+---
 
-```bash
-aws eks update-kubeconfig --region ap-south-1 --name hospital-dev-eks
-kubectl apply -f ../../../kubernetes
-kubectl get svc -n hospital
-```
+## ⚙️ Technologies Used
 
-## Jenkins parameters
-
-- `ENVIRONMENT`: dev or prod
-- `ACTION`: plan, apply, destroy, deploy-app
-
-Required Jenkins tools on agent:
-
-- terraform
-- aws cli
-- kubectl
-- git
-
-Required Jenkins AWS credentials:
-
-- `aws-access-key-id`
-- `aws-secret-access-key`
-=======
-# hospital-devops-project-
-terraform usecase
->>>>>>> 7cb90dfa7782a13362b108f91afdd76964c16d09
+- Terraform
+- AWS
+- Amazon EKS
+- Amazon VPC
+- Amazon IAM
+- Amazon ECR
+- Amazon ALB
+- Amazon S3
+- DynamoDB
+- Jenkins
+- Kubernetes
+- Git & GitHub
