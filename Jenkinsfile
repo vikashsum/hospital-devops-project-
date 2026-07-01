@@ -3,7 +3,7 @@ pipeline {
 
     parameters {
         choice(name: 'ENVIRONMENT', choices: ['dev'], description: 'Terraform environment')
-        choice(name: 'ACTION', choices: ['plan', 'apply', 'destroy', 'deploy-app'], description: 'Pipeline action')
+        choice(name: 'ACTION', choices: ['plan', 'apply', 'destroy'], description: 'Pipeline action')
         booleanParam(name: 'AUTO_APPROVE', defaultValue: false, description: 'Auto approve apply/destroy')
     }
 
@@ -27,6 +27,7 @@ pipeline {
             steps {
                 sh 'terraform version'
                 sh 'aws --version'
+                sh 'kubectl version --client || true'
             }
         }
 
@@ -68,9 +69,8 @@ pipeline {
 
         stage('Approval') {
             when {
-                anyOf {
-                    expression { params.ACTION == 'apply' && !params.AUTO_APPROVE }
-                    expression { params.ACTION == 'destroy' && !params.AUTO_APPROVE }
+                expression {
+                    (params.ACTION == 'apply' || params.ACTION == 'destroy') && !params.AUTO_APPROVE
                 }
             }
             steps {
@@ -89,20 +89,9 @@ pipeline {
             }
         }
 
-        stage('Terraform Destroy') {
+        stage('Configure Kubeconfig') {
             when {
-                expression { params.ACTION == 'destroy' }
-            }
-            steps {
-                dir("${env.TF_DIR}") {
-                    sh 'terraform destroy -var-file=${TFVARS_FILE} -auto-approve'
-                }
-            }
-        }
-
-        stage('Deploy App to EKS') {
-            when {
-                expression { params.ACTION == 'deploy-app' }
+                expression { params.ACTION == 'apply' }
             }
             steps {
                 dir("${env.TF_DIR}") {
@@ -115,9 +104,29 @@ pipeline {
                 }
 
                 sh 'aws eks update-kubeconfig --region ${AWS_DEFAULT_REGION} --name ${CLUSTER_NAME}'
+                sh 'kubectl get nodes'
+            }
+        }
+
+        stage('Deploy App to EKS') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            steps {
                 sh 'kubectl apply -f kubernetes/'
                 sh 'kubectl get pods -n hospital'
                 sh 'kubectl get svc -n hospital'
+            }
+        }
+
+        stage('Terraform Destroy') {
+            when {
+                expression { params.ACTION == 'destroy' }
+            }
+            steps {
+                dir("${env.TF_DIR}") {
+                    sh 'terraform destroy -var-file=${TFVARS_FILE} -auto-approve'
+                }
             }
         }
     }
