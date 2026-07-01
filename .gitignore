@@ -9,3 +9,5 @@ crash.*.log
 .DS_Store
 .idea/
 .vscode/
+# EC2 Private Key
+Vikash.pem
