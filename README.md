@@ -1,158 +1,77 @@
 # 🚀 Hospital DevOps Project
 
-> End-to-End Infrastructure Automation using Terraform, Jenkins, Amazon EKS, Kubernetes and AWS
+## 📌 Project Overview
 
----
+This project demonstrates how to provision an **Amazon EKS (Elastic Kubernetes Service)** cluster using **Terraform Modules**, automate the infrastructure deployment with a **Jenkins CI/CD Pipeline**, and deploy applications to Kubernetes.
 
-# 📖 Project Overview
-
-This project demonstrates how a complete AWS infrastructure can be provisioned using **Infrastructure as Code (IaC)** with **Terraform**, automated using **Jenkins CI/CD**, and deployed onto **Amazon Elastic Kubernetes Service (EKS)**.
-
-The repository follows real-world DevOps practices such as:
-
-- Terraform Modules
-- Remote State Backend
-- State Locking
-- Jenkins Pipeline
-- Infrastructure Validation
-- Infrastructure Planning
-- Automated Infrastructure Provisioning
-- Kubernetes Deployment
-
-The entire infrastructure can be deployed by triggering a Jenkins pipeline without manually creating AWS resources.
+The project follows Infrastructure as Code (IaC) principles and provisions AWS infrastructure in a repeatable and automated manner.
 
 ---
 
 # 🎯 Project Objectives
 
-The objective of this project is to automate the provisioning of a production-style Kubernetes infrastructure.
+The primary goals of this project are:
 
-Instead of manually creating AWS resources from the AWS Console, Terraform creates them automatically.
-
-The Jenkins Pipeline automates the complete deployment process.
-
-The infrastructure includes:
-
-- Amazon VPC
-- Public Subnets
-- Private Subnets
-- Internet Gateway
-- NAT Gateway
-- Route Tables
-- IAM Roles
-- Amazon EKS Cluster
-- Managed Node Group
-- Amazon ECR
-- Application Load Balancer
+- Provision AWS infrastructure using Terraform
+- Organize Terraform code using reusable modules
+- Store Terraform state remotely using Amazon S3
+- Enable state locking using DynamoDB
+- Automate Terraform deployment through Jenkins
+- Create an Amazon EKS Cluster
+- Deploy Kubernetes resources to the EKS cluster
+- Follow DevOps best practices for Infrastructure as Code
 
 ---
 
-# 🏗 High Level Architecture
+# 🏗️ Architecture
 
 ```text
-               Developer
-
-                    │
-
-                    ▼
-
-            GitHub Repository
-
-                    │
-
-              Git Push / Webhook
-
-                    │
-
-                    ▼
-
-             Jenkins Pipeline
-
-                    │
-
-      ┌─────────────┴──────────────┐
-
-      │                            │
-
- Terraform Validate          Terraform Plan
-
-      │
-
-      ▼
-
- Terraform Apply
-
-      │
-
-      ▼
-
-┌──────────────────────────────────────────────┐
-
-│                    AWS                       │
-
-│                                              │
-
-│  VPC                                         │
-
-│   ├── Public Subnets                         │
-
-│   ├── Private Subnets                        │
-
-│   ├── Internet Gateway                       │
-
-│   ├── NAT Gateway                            │
-
-│                                              │
-
-│  IAM Roles                                   │
-
-│  ECR Repository                              │
-
-│  Amazon EKS                                  │
-
-│  Managed Node Group                          │
-
-│  Application Load Balancer                   │
-
-└──────────────────────────────────────────────┘
-
-                    │
-
-                    ▼
-
-       aws eks update-kubeconfig
-
-                    │
-
-                    ▼
-
-            kubectl apply
-
-                    │
-
-                    ▼
-
-          Kubernetes Deployment
-
-                    │
-
-                    ▼
-
-           Running Application
+Developer
+    │
+    ▼
+GitHub Repository
+    │
+    ▼
+Jenkins Pipeline
+    │
+    ├── Terraform fmt
+    ├── Terraform validate
+    ├── Terraform init
+    ├── Terraform plan
+    ├── Manual Approval
+    └── Terraform apply
+           │
+           ▼
+         AWS
+         ├── VPC
+         ├── IAM
+         ├── Amazon EKS
+         ├── Amazon ECR
+         ├── Application Load Balancer
+         └── S3 Backend + DynamoDB Lock
+                │
+                ▼
+      aws eks update-kubeconfig
+                │
+                ▼
+           Kubernetes Cluster
+                │
+                ▼
+          Deploy Application
 ```
 
 ---
 
-# 🛠 Technology Stack
+# 🛠️ Technology Stack
 
 | Technology | Purpose |
 |------------|---------|
-| AWS | Cloud Provider |
+| AWS | Cloud Platform |
 | Terraform | Infrastructure as Code |
-| Jenkins | Continuous Integration / Continuous Delivery |
+| Jenkins | CI/CD Pipeline |
 | Amazon EKS | Kubernetes Cluster |
 | Kubernetes | Container Orchestration |
-| Amazon ECR | Docker Image Repository |
+| Amazon ECR | Container Image Registry |
 | Amazon S3 | Terraform Remote Backend |
 | DynamoDB | Terraform State Locking |
 | Git | Version Control |
@@ -160,92 +79,140 @@ The infrastructure includes:
 
 ---
 
-# 📁 Repository Structure
+# 📁 Project Structure
 
 ```text
-hospital-devops-project-
-
+hospital-devops-project
 │
-
 ├── Jenkinsfile
-
 ├── kubernetes
-
 │   ├── namespace.yaml
-
 │   ├── deployment.yaml
-
 │   └── service.yaml
-
 │
-
 └── terraform
-
     ├── backend
-
-    │      dev.hcl
-
+    │   └── dev.hcl
     │
-
-    ├── envs
-
-    │      dev
-
+    ├── modules
+    │   ├── vpc
+    │   ├── iam
+    │   ├── eks
+    │   ├── ecr
+    │   ├── alb
+    │   └── jenkins
     │
-
-    └── modules
-
-          ├── vpc
-
-          ├── iam
-
-          ├── eks
-
-          ├── alb
-
-          ├── ecr
-
-          └── jenkins
+    ├── main.tf
+    ├── providers.tf
+    ├── variables.tf
+    ├── outputs.tf
+    ├── versions.tf
+    └── dev.tfvars
 ```
 
 ---
 
-# 📚 Documentation
+# 📦 Terraform Modules
 
-The project documentation is split into multiple files.
+This project uses reusable Terraform modules.
 
-| Document | Description |
-|----------|-------------|
-| docs/01-project-overview.md | Complete Project Explanation |
-| docs/02-terraform-fundamentals.md | Learn Terraform |
-| docs/03-terraform-modules.md | Terraform Modules |
-| docs/04-terraform-backend.md | Remote Backend |
-| docs/05-vpc-module.md | VPC Module |
-| docs/06-iam-module.md | IAM Module |
-| docs/07-eks-module.md | EKS Module |
-| docs/08-ecr-module.md | ECR Module |
-| docs/09-alb-module.md | ALB Module |
-| docs/10-jenkins-pipeline.md | Jenkins Pipeline |
-| docs/11-kubernetes.md | Kubernetes |
-| docs/12-deployment-flow.md | Complete Deployment Flow |
-| docs/13-troubleshooting.md | Troubleshooting |
-| docs/14-interview-notes.md | DevOps Interview Questions |
+| Module | Purpose |
+|---------|---------|
+| vpc | Creates VPC, Subnets, Internet Gateway, NAT Gateway and Route Tables |
+| iam | Creates IAM Roles and Policies required by EKS |
+| eks | Creates the Amazon EKS Cluster and Managed Node Group |
+| ecr | Creates an Amazon ECR Repository |
+| alb | Creates an Application Load Balancer |
+| jenkins | (Optional) Creates a Jenkins EC2 instance |
 
 ---
 
-# 🚀 Features
+# 🔄 Jenkins Pipeline
 
-- Infrastructure as Code
-- Reusable Terraform Modules
-- Remote Backend
-- State Locking
-- Automated Infrastructure Deployment
-- Infrastructure Validation
-- Infrastructure Planning
-- Kubernetes Deployment
-- Automated EKS Creation
-- Jenkins Approval Stage
-- GitHub Integration
+The Jenkins pipeline automates the infrastructure deployment.
+
+Pipeline stages:
+
+1. Checkout
+2. Terraform Format
+3. Terraform Validate
+4. Terraform Init
+5. Terraform Plan
+6. Manual Approval
+7. Terraform Apply
+8. Configure kubeconfig
+9. Deploy Application to EKS
+
+---
+
+# 🚀 Deployment Workflow
+
+1. Push code to GitHub.
+2. Jenkins checks out the latest code.
+3. Terraform validates the configuration.
+4. Terraform initializes the backend.
+5. Terraform generates an execution plan.
+6. Manual approval is requested before applying changes.
+7. Terraform provisions the AWS infrastructure.
+8. Jenkins configures `kubectl` to connect to the EKS cluster.
+9. Kubernetes manifests are applied to deploy the application.
+
+---
+
+# 📋 Prerequisites
+
+- AWS Account
+- AWS CLI
+- Terraform
+- Jenkins
+- kubectl
+- Git
+- GitHub Repository
+- S3 Bucket for Terraform State
+- DynamoDB Table for State Locking
+
+---
+
+# ▶️ Running the Project Locally
+
+```bash
+cd terraform
+
+terraform init -backend-config=backend/dev.hcl
+
+terraform validate
+
+terraform plan -var-file=dev.tfvars
+
+terraform apply -var-file=dev.tfvars
+```
+
+---
+
+# 🧹 Cleanup
+
+To delete all AWS resources created by Terraform:
+
+```bash
+terraform destroy -var-file=dev.tfvars
+```
+
+---
+
+# 📖 Documentation
+
+Detailed documentation will be available in the `docs/` directory.
+
+Examples:
+
+- Project Overview
+- Terraform Fundamentals
+- Terraform Modules
+- Terraform Backend
+- Jenkins Pipeline
+- Kubernetes
+- Troubleshooting
+- Interview Notes
 
 ---
 
@@ -253,4 +220,16 @@ The project documentation is split into multiple files.
 
 **Vikash Suman**
 
-DevOps Engineer
+DevOps | AWS | Terraform | Kubernetes | Jenkins
+
+---
+
+# ⭐ Future Enhancements
+
+- Multi-environment support (dev, test, prod)
+- GitHub Actions integration
+- Terraform Cloud backend
+- Helm-based Kubernetes deployments
+- Monitoring with Prometheus and Grafana
+- Logging with EFK/ELK Stack
+- ArgoCD for GitOps deployments
